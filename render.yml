@@ -1,0 +1,12 @@
+services:
+  - type: cron
+    name: crypto-rsi-alert-bot
+    env: python
+    schedule: "0 * * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python bot.py"
+    envVars:
+      - key: TELEGRAM_TOKEN
+        value: your_bot_token
+      - key: TELEGRAM_CHAT_ID
+        value: your_chat_id
