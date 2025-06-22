@@ -1,1 +1,14 @@
-curl -fsS --retry 3 https://crypto-rsi-alerts.onrender.com/scan || true
+name: Hourly Ping Render Bot
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl Render Scan Endpoint
+        run: |
+          curl -fsS --retry 3 https://crypto-rsi-alerts.onrender.com/scan || true
