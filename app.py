@@ -12,11 +12,19 @@ def send(msg: str):
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         requests.post(url, data={"chat_id": CHATID, "text": msg})
 
-def scan():
+def def scan():
     markets = BINANCE.fetch_markets()
-    symbols = [m["symbol"] for m in markets
-               if m.get("contractType") == "PERPETUAL" and m["quote"] == "USDT"][:50]
-
+    
+    # Filter only USDT-margined perpetual futures
+    usdt_perps = [m for m in markets
+                  if m.get("contractType") == "PERPETUAL" and m["quote"] == "USDT"]
+    
+    # Sort by quote volume (24h volume in USDT)
+    sorted_markets = sorted(usdt_perps, key=lambda x: x.get("quoteVolume", 0), reverse=True)
+    
+    # Take top 50
+    symbols = [m["symbol"] for m in sorted_markets[:50]]
+    
     for sym in symbols:
         try:
             df1h = pd.DataFrame(BINANCE.fetch_ohlcv(sym, "1h", limit=100),
