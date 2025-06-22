@@ -2,3 +2,5 @@ ccxt
 pandas
 ta
 requests
+fastapi
+uvicorn
