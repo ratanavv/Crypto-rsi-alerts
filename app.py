@@ -1,31 +1,46 @@
-import os, requests, ccxt, pandas as pd
+import os, requests, ccxt, pandas as pd, time
 from fastapi import FastAPI
 from ta.momentum import RSIIndicator
 
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
 CHATID = os.getenv("TELEGRAM_CHAT_ID")
-BINANCE = ccxt.binance({"enableRateLimit": True,
-                        "options": {"defaultType": "future"}})
+BINANCE = ccxt.binance({
+    "enableRateLimit": True,
+    "options": {"defaultType": "future"}
+})
 
 def send(msg: str):
     if TOKEN and CHATID:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         requests.post(url, data={"chat_id": CHATID, "text": msg})
 
+def fetch_ohlcv_safely(symbol, timeframe, limit=100):
+    time.sleep(0.25)  # throttle: 4 requests/sec
+    return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
+
 def scan():
     markets = BINANCE.fetch_markets()
-
-    # Filter USDT perpetual futures and sort by 24h quote volume
-    usdt_perps = [m for m in markets if m.get("contractType") == "PERPETUAL" and m["quote"] == "USDT"]
-    sorted_markets = sorted(usdt_perps, key=lambda x: x.get("quoteVolume", 0), reverse=True)
-    symbols = [m["symbol"] for m in sorted_markets[:50]]
+    usdt_perps = [
+        m for m in markets
+        if m.get("contractType") == "PERPETUAL" and m["quote"] == "USDT"
+    ]
+    sorted_markets = sorted(
+        usdt_perps,
+        key=lambda x: x.get("quoteVolume", 0),
+        reverse=True
+    )
+    symbols = [m["symbol"] for m in sorted_markets[:30]]
 
     for sym in symbols:
         try:
-            df1h = pd.DataFrame(BINANCE.fetch_ohlcv(sym, "1h", limit=100),
-                                columns=["ts","o","h","l","c","v"])
-            df1d = pd.DataFrame(BINANCE.fetch_ohlcv(sym, "1d", limit=100),
-                                columns=["ts","o","h","l","c","v"])
+            df1h = pd.DataFrame(
+                fetch_ohlcv_safely(sym, "1h"),
+                columns=["ts", "o", "h", "l", "c", "v"]
+            )
+            df1d = pd.DataFrame(
+                fetch_ohlcv_safely(sym, "1d"),
+                columns=["ts", "o", "h", "l", "c", "v"]
+            )
 
             df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
             df1d["rsi"] = RSIIndicator(df1d["c"], window=9).rsi()
@@ -43,7 +58,8 @@ def scan():
 app = FastAPI()
 
 @app.get("/")        # health-check
-def root(): return {"ok": True}
+def root():
+    return {"ok": True}
 
 @app.get("/scan")    # hourly trigger
 def run_scan():
