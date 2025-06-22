@@ -1,0 +1,1 @@
+curl -fsS --retry 3 https://crypto-rsi-alerts.onrender.com/scan || true
