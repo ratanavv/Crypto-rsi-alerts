@@ -74,4 +74,4 @@ def root():
 @app.api_route("/scan", methods=["GET", "HEAD"])
 async def run_scan(request: Request):
     scan()
-    return {"status": "scanned"}
+    return {"ok": True}
