@@ -69,7 +69,11 @@ app = FastAPI()
 def root():
     return {"ok": True}
 
-@app.get("/scan")
-def run_scan():
+
+# ✅ Accept both GET and HEAD requests
+@app.api_route("/scan", methods=["GET", "HEAD"])
+async def run_scan(request: Request):
+    if request.method == "HEAD":
+        return Response(status_code=200)
     scan()
     return {"status": "scanned"}
