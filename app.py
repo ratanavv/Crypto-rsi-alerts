@@ -7,7 +7,7 @@ CHATID = os.getenv("TELEGRAM_CHAT_ID")
 
 BINANCE = ccxt.binance({
     "enableRateLimit": True,
-    "options": {"defaultType": "future"}
+    "options": {"defaultType": "spot"}
 })
 
 def send(msg: str):
@@ -23,18 +23,19 @@ def fetch_ohlcv_safe(symbol, timeframe, limit=100):
 
 def scan():
     markets = BINANCE.fetch_markets()
-    usdt_perps = [
+    usdt_spots = [
         m for m in markets
-        if m.get("contractType") == "PERPETUAL"
-        and m.get("quote") == "USDT"
+        if m.get("quote") == "USDT"
         and m.get("active", False)
-        and ":USDT" in m["symbol"]  # ensure futures symbol format
+        and not m.get("future", False)
+        and not m.get("contract", False)
+        and "/USDT" in m["symbol"]
     ]
 
-    sorted_markets = sorted(usdt_perps, key=lambda x: x.get("quoteVolume", 0), reverse=True)
+    sorted_markets = sorted(usdt_spots, key=lambda x: x.get("quoteVolume", 0), reverse=True)
     symbols = [m["symbol"] for m in sorted_markets[:30]]
 
-    print("Top 30 Symbols:", symbols)
+    print("Top 30 Spot Symbols:", symbols)
 
     for sym in symbols:
         try:
