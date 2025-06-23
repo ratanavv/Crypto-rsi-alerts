@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: crypto-rsi-alert-bot-rsi-debug
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: TELEGRAM_TOKEN
+        value: your_bot_token
+      - key: TELEGRAM_CHAT_ID
+        value: your_chat_id
