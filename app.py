@@ -19,7 +19,7 @@ def send(msg: str):
 
 def fetch_ohlcv_safe(symbol, timeframe, limit=100):
     try:
-        time.sleep(0.7)  # Increased to stay within Binance limits
+        time.sleep(0.7)
         return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
     except Exception as e:
         print(f"[ERROR] fetch_ohlcv_safe {symbol} {timeframe}: {e}")
@@ -38,7 +38,6 @@ def scan():
 
     sorted_markets = sorted(usdt_spots, key=lambda x: x.get("quoteVolume", 0), reverse=True)
     symbols = [m["symbol"] for m in sorted_markets[:30]]
-
     print("Top 30 Spot Symbols:", symbols)
 
     for i, sym in enumerate(symbols, start=1):
@@ -53,7 +52,20 @@ def scan():
             prev1h = df1h["rsi"].iloc[-2]
             now1d = df1d["rsi"].iloc[-1]
 
-            send(f"{sym} RSI1H Prev={prev1h:.1f}, Now={now1h:.1f}, RSI1D={now1d:.1f}")
+            # Strategy 1: Long
+            if prev1h < 40 and now1h > 40 and now1d > 40:
+                send(f"📈 LONG ALERT
+{sym}
+RSI1H: {prev1h:.1f} ➜ {now1h:.1f}
+RSI1D: {now1d:.1f}")
+
+            # Strategy 2: Short
+            elif prev1h > 60 and now1h < 60 and now1d < 60:
+                send(f"📉 SHORT ALERT
+{sym}
+RSI1H: {prev1h:.1f} ➜ {now1h:.1f}
+RSI1D: {now1d:.1f}")
+
         except Exception as e:
             print(f"[ERROR] while scanning {sym}: {e}")
 
