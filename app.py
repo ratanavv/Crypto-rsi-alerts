@@ -18,8 +18,12 @@ def send(msg: str):
         print(">> TELEGRAM RESPONSE:", r.status_code, r.text)
 
 def fetch_ohlcv_safe(symbol, timeframe, limit=100):
-    time.sleep(0.25)
-    return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
+    try:
+        time.sleep(0.7)  # Increased to stay within Binance limits
+        return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
+    except Exception as e:
+        print(f"[ERROR] fetch_ohlcv_safe {symbol} {timeframe}: {e}")
+        raise
 
 def scan():
     markets = BINANCE.fetch_markets()
@@ -37,9 +41,9 @@ def scan():
 
     print("Top 30 Spot Symbols:", symbols)
 
-    for sym in symbols:
+    for i, sym in enumerate(symbols, start=1):
         try:
-            print(f">> SCANNING: {sym}")
+            print(f"[{i}/30] >> SCANNING: {sym}")
             df1h = pd.DataFrame(fetch_ohlcv_safe(sym, "1h"), columns=["ts","o","h","l","c","v"])
             df1d = pd.DataFrame(fetch_ohlcv_safe(sym, "1d"), columns=["ts","o","h","l","c","v"])
             df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
@@ -51,7 +55,7 @@ def scan():
 
             send(f"{sym} RSI1H Prev={prev1h:.1f}, Now={now1h:.1f}, RSI1D={now1d:.1f}")
         except Exception as e:
-            print(f"Error for {sym}: {e}")
+            print(f"[ERROR] while scanning {sym}: {e}")
 
 app = FastAPI()
 
