@@ -1,3 +1,4 @@
+
 import os, requests, ccxt, pandas as pd, time
 from fastapi import FastAPI
 from ta.momentum import RSIIndicator
@@ -48,10 +49,8 @@ def scan():
             rsi1h_now, rsi1h_prev = df1h["rsi"].iloc[-1], df1h["rsi"].iloc[-2]
             rsi1d_now = df1d["rsi"].iloc[-1]
 
-            if rsi1h_prev < 40 <= rsi1h_now and rsi1d_now > 40:
-                send(f"📈 LONG {sym} – 1H RSI→40↑, 1D RSI={rsi1d_now:.1f}")
-            if rsi1h_prev > 60 >= rsi1h_now and rsi1d_now < 60:
-                send(f"📉 SHORT {sym} – 1H RSI→60↓, 1D RSI={rsi1d_now:.1f}")
+            # Debug: send RSI values for every symbol
+            send(f"🔍 {sym} – RSI1H Prev={rsi1h_prev:.1f}, Now={rsi1h_now:.1f}, RSI1D={rsi1d_now:.1f}")
         except Exception as e:
             print(sym, e)
 
