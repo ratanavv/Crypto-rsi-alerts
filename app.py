@@ -25,7 +25,8 @@ def fetch_ohlcv_safe(symbol, timeframe, limit=100):
     except:
         return []
 
-def scan():
+async def scan():
+    print(">>> Background task running...")
     try:
         markets = BINANCE.fetch_markets()
         usdt_spots = [
@@ -66,5 +67,6 @@ def root():
 
 @app.get("/scan")
 async def run_scan(background_tasks: BackgroundTasks):
+    print(">>> Background task scheduled")
     background_tasks.add_task(scan)
     return {"status": "scanning started"}
