@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: crypto-rsi-alert-bot-debug
+    name: crypto-rsi-alert-bot
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
