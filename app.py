@@ -54,17 +54,11 @@ def scan():
 
             # Strategy 1: Long
             if prev1h < 40 and now1h > 40 and now1d > 40:
-                send(f"📈 LONG ALERT
-{sym}
-RSI1H: {prev1h:.1f} ➜ {now1h:.1f}
-RSI1D: {now1d:.1f}")
+                send(f"📈 LONG ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
 
             # Strategy 2: Short
             elif prev1h > 60 and now1h < 60 and now1d < 60:
-                send(f"📉 SHORT ALERT
-{sym}
-RSI1H: {prev1h:.1f} ➜ {now1h:.1f}
-RSI1D: {now1d:.1f}")
+                send(f"📉 SHORT ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
 
         except Exception as e:
             print(f"[ERROR] while scanning {sym}: {e}")
