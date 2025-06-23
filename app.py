@@ -73,7 +73,5 @@ def root():
 # ✅ Accept both GET and HEAD requests
 @app.api_route("/scan", methods=["GET", "HEAD"])
 async def run_scan(request: Request):
-    if request.method == "HEAD":
-        return Response(status_code=200)
     scan()
     return {"status": "scanned"}
