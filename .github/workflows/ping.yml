@@ -2,7 +2,7 @@ name: Hourly Ping Render Bot
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour
+    - cron: '30 * * * *'  # Every hour
   workflow_dispatch:
 
 jobs:
