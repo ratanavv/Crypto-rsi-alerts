@@ -1,5 +1,5 @@
 import os, requests, ccxt, pandas as pd, time
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from ta.momentum import RSIIndicator
 
@@ -12,57 +12,54 @@ BINANCE = ccxt.binance({
 })
 
 def send(msg: str):
-    print(">> SEND:", msg)
     if TOKEN and CHATID:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-        r = requests.post(url, data={"chat_id": CHATID, "text": msg})
-        print(">> TELEGRAM RESPONSE:", r.status_code, r.text)
+        try:
+            requests.post(url, data={"chat_id": CHATID, "text": msg})
+        except:
+            pass
 
 def fetch_ohlcv_safe(symbol, timeframe, limit=100):
     try:
         time.sleep(0.7)
         return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
-    except Exception as e:
-        print(f"[ERROR] fetch_ohlcv_safe {symbol} {timeframe}: {e}")
-        raise
+    except:
+        return []
 
-def scan():
-    markets = BINANCE.fetch_markets()
-    usdt_spots = [
-        m for m in markets
-        if m.get("quote") == "USDT"
-        and m.get("active", False)
-        and not m.get("future", False)
-        and not m.get("contract", False)
-        and "/USDT" in m["symbol"]
-    ]
+async def scan():
+    print(">>> Scan running...")
+    try:
+        markets = BINANCE.fetch_markets()
+        usdt_spots = [
+            m for m in markets
+            if m.get("quote") == "USDT"
+            and m.get("active", False)
+            and not m.get("future", False)
+            and not m.get("contract", False)
+            and "/USDT" in m["symbol"]
+        ]
+        sorted_markets = sorted(usdt_spots, key=lambda x: x.get("quoteVolume", 0), reverse=True)
+        symbols = [m["symbol"] for m in sorted_markets[:30]]
+        for sym in symbols:
+            try:
+                df1h = pd.DataFrame(fetch_ohlcv_safe(sym, "1h"), columns=["ts","o","h","l","c","v"])
+                df1d = pd.DataFrame(fetch_ohlcv_safe(sym, "1d"), columns=["ts","o","h","l","c","v"])
+                df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
+                df1d["rsi"] = RSIIndicator(df1d["c"], window=9).rsi()
 
-    sorted_markets = sorted(usdt_spots, key=lambda x: x.get("quoteVolume", 0), reverse=True)
-    symbols = [m["symbol"] for m in sorted_markets[:30]]
-    print("Top 30 Spot Symbols:", symbols)
+                now1h = df1h["rsi"].iloc[-1]
+                prev1h = df1h["rsi"].iloc[-2]
+                now1d = df1d["rsi"].iloc[-1]
+                price = df1h["c"].iloc[-1]  # current close price
 
-    for i, sym in enumerate(symbols, start=1):
-        try:
-            print(f"[{i}/30] >> SCANNING: {sym}")
-            df1h = pd.DataFrame(fetch_ohlcv_safe(sym, "1h"), columns=["ts","o","h","l","c","v"])
-            df1d = pd.DataFrame(fetch_ohlcv_safe(sym, "1d"), columns=["ts","o","h","l","c","v"])
-            df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
-            df1d["rsi"] = RSIIndicator(df1d["c"], window=9).rsi()
-
-            now1h = df1h["rsi"].iloc[-1]
-            prev1h = df1h["rsi"].iloc[-2]
-            now1d = df1d["rsi"].iloc[-1]
-
-            # Strategy 1: Long
-            if prev1h < 40 and now1h > 40 and now1d > 40:
-                send(f"📈 LONG ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
-
-            # Strategy 2: Short
-            elif prev1h > 60 and now1h < 60 and now1d < 60:
-                send(f"📉 SHORT ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
-
-        except Exception as e:
-            print(f"[ERROR] while scanning {sym}: {e}")
+                if prev1h < 40 and now1h > 40 and now1d > 40:
+                    send(f"📈 LONG ALERT\n{sym}\nPrice: ${price:.2f}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
+                elif prev1h > 60 and now1h < 60 and now1d < 60:
+                    send(f"📉 SHORT ALERT\n{sym}\nPrice: ${price:.2f}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
+            except:
+                continue
+    except:
+        pass
 
 app = FastAPI()
 
@@ -73,7 +70,6 @@ async def root(request: Request):
     return {"ok": True}
 
 @app.get("/scan")
-def run_scan():
-    print(">>>scanning started")
-    scan()
-    return {"status": "scanned"}
+async def run_scan():
+    await scan()
+    return {"status": "scan completed"}
