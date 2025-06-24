@@ -1,5 +1,6 @@
 import os, requests, ccxt, pandas as pd, time
 from fastapi import FastAPI, BackgroundTasks, Request, Response
+from fastapi.responses import JSONResponse
 from ta.momentum import RSIIndicator
 
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
