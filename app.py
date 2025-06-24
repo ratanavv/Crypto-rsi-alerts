@@ -1,5 +1,5 @@
 import os, requests, ccxt, pandas as pd, time
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Request, Response
 from ta.momentum import RSIIndicator
 
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
@@ -61,8 +61,10 @@ async def scan():
 
 app = FastAPI()
 
-@app.get("/")
-def root():
+@app.api_route("/", methods=["GET", "HEAD"])
+async def root(request: Request):
+    if request.method == "HEAD":
+        return JSONResponse(content=None, status_code=200)
     return {"ok": True}
 
 @app.get("/scan")
