@@ -50,11 +50,12 @@ async def scan():
                 now1h = df1h["rsi"].iloc[-1]
                 prev1h = df1h["rsi"].iloc[-2]
                 now1d = df1d["rsi"].iloc[-1]
+                price = df1h["c"].iloc[-1]  # current close price
 
                 if prev1h < 40 and now1h > 40 and now1d > 40:
-                    send(f"📈 LONG ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
+                    send(f"📈 LONG ALERT\n{sym}\nPrice: ${price:.2f}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
                 elif prev1h > 60 and now1h < 60 and now1d < 60:
-                    send(f"📉 SHORT ALERT\n{sym}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
+                    send(f"📉 SHORT ALERT\n{sym}\nPrice: ${price:.2f}\nRSI1H: {prev1h:.1f} ➜ {now1h:.1f}\nRSI1D: {now1d:.1f}")
             except:
                 continue
     except:
