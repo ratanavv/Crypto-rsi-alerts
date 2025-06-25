@@ -80,14 +80,14 @@ async def scan():
                 if prev1h < 40 and now1h > 40 and now1d > 40:
                     send(
                         f"📈 RSI LONG SIGNAL\n{sym}\n"
-                        f"Price: ${price:.2f}\n"
+                        f"Price: ${price:.6f}\n"
                         f"RSI 1H: {prev1h:.1f} ➜ {now1h:.1f}\n"
                         f"RSI 1D: {now1d:.1f}"
                     )
                 elif prev1h > 60 and now1h < 60 and now1d < 60:
                     send(
                         f"📉 RSI SHORT SIGNAL\n{sym}\n"
-                        f"Price: ${price:.2f}\n"
+                        f"Price: ${price:.6f}\n"
                         f"RSI 1H: {prev1h:.1f} ➜ {now1h:.1f}\n"
                         f"RSI 1D: {now1d:.1f}"
                     )
