@@ -27,14 +27,14 @@ def send(msg: str):
 # === OHLCV Fetcher with Retry ===
 def fetch_ohlcv_safe(symbol, timeframe="1h", limit=100):
     try:
-        time.sleep(0.3)
+        time.sleep(1)
         return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
     except Exception as e:
         print(f"❌ OHLCV fetch failed for {symbol} ({timeframe}): {e}")
         return []
 
 # === Get Top Active Futures by Quote Volume ===
-def get_top_futures_symbols(limit=30):
+def get_top_futures_symbols(limit=50):
     try:
         res = requests.get("https://fapi.binance.com/fapi/v1/ticker/24hr")
         res.raise_for_status()
