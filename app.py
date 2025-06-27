@@ -27,7 +27,7 @@ def send(msg: str):
 # === OHLCV Fetcher with Retry ===
 def fetch_ohlcv_safe(symbol, timeframe="1h", limit=100):
     try:
-        time.sleep(0.2)
+        time.sleep(0.3)
         return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
     except Exception as e:
         print(f"❌ OHLCV fetch failed for {symbol} ({timeframe}): {e}")
