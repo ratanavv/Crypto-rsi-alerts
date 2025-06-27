@@ -2,6 +2,7 @@ import os, time, requests, ccxt, pandas as pd
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from ta.momentum import RSIIndicator
+from ta.volatility import AverageTrueRange
 
 # === Load Env Variables ===
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
@@ -24,10 +25,10 @@ def send(msg: str):
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
-# === OHLCV Fetcher with Retry ===
+# === OHLCV Fetcher with Delay ===
 def fetch_ohlcv_safe(symbol, timeframe="1h", limit=100):
     try:
-        time.sleep(0.3)
+        time.sleep(0.5)
         return BINANCE.fetch_ohlcv(symbol, timeframe, limit=limit)
     except Exception as e:
         print(f"❌ OHLCV fetch failed for {symbol} ({timeframe}): {e}")
@@ -46,7 +47,7 @@ def get_top_futures_symbols(limit=50):
         print(f"❌ Error getting futures list: {e}")
         return []
 
-# === RSI Signal Logic ===
+# === RSI Scan Logic with ATR & Volume Filter ===
 async def scan():
     print("🔍 Scanning RSI signals...")
     symbols = get_top_futures_symbols()
@@ -58,20 +59,37 @@ async def scan():
         try:
             df1h = pd.DataFrame(fetch_ohlcv_safe(sym, "1h"), columns=["ts", "o", "h", "l", "c", "v"])
             df1d = pd.DataFrame(fetch_ohlcv_safe(sym, "1d"), columns=["ts", "o", "h", "l", "c", "v"])
-            if len(df1h) < 10 or len(df1d) < 10:
+            if len(df1h) < 20 or len(df1d) < 10:
                 continue
 
+            # Indicators
             df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
             df1d["rsi"] = RSIIndicator(df1d["c"], window=9).rsi()
+            df1h["atr"] = AverageTrueRange(high=df1h["h"], low=df1h["l"], close=df1h["c"], window=14).average_true_range()
 
-            if df1h["rsi"].iloc[-2:].isna().any() or pd.isna(df1d["rsi"].iloc[-1]):
+            # NaN Check
+            if df1h["rsi"].iloc[-2:].isna().any() or pd.isna(df1d["rsi"].iloc[-1]) or pd.isna(df1h["atr"].iloc[-1]):
                 continue
 
+            # === Volume & Volatility Filters ===
+            latest_volume = df1h["v"].iloc[-1]
+            avg_volume = df1h["v"].tail(14).mean()
+            atr_now = df1h["atr"].iloc[-1]
+            atr_avg = df1h["atr"].mean()
+
+            if latest_volume < avg_volume * 0.4:
+                print(f"⏩ Skipped {sym} (Low volume)")
+                continue
+            if atr_now < atr_avg * 0.6:
+                print(f"⏩ Skipped {sym} (Low volatility)")
+                continue
+
+            # Price & RSI values
+            price = df1h["c"].iloc[-1]
             prev1h, now1h = df1h["rsi"].iloc[-2], df1h["rsi"].iloc[-1]
             now1d = df1d["rsi"].iloc[-1]
-            price = df1h["c"].iloc[-1]
 
-            # RSI Cross Long
+            # === RSI Signal Logic ===
             if prev1h < 40 and now1h > 40 and now1d > 40:
                 send(
                     f"📈 RSI LONG SIGNAL\n{sym}\n"
@@ -80,7 +98,6 @@ async def scan():
                     f"RSI 1D: {now1d:.1f}"
                 )
 
-            # RSI Cross Short
             elif prev1h > 60 and now1h < 60 and now1d < 60:
                 send(
                     f"📉 RSI SHORT SIGNAL\n{sym}\n"
