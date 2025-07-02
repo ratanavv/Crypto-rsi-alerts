@@ -100,8 +100,8 @@ async def scan():
                 f"RSI1H: {prev1h:.2f} ➜ {now1h:.2f}\n"
                 f"RSI1D: {now1d:.2f}\n"
                 f"Volume: {latest_volume:.2f} (Avg: {avg_volume:.2f})\n"
-                f"ATR: {atr_now:.4f} (Avg: {atr_avg:.4f})"
-                f"EMA200: {ema:.2f}"
+                f"ATR: {atr_now:.4f} (Avg: {atr_avg:.4f})\n"
+                f"EMA200: {ema:.2f}\n"
             )
             print(debug_msg)
 
