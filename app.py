@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from ta.momentum import RSIIndicator
 from ta.volatility import AverageTrueRange
 from ta.trend import EMAIndicator
+import threading
 
 # === Load Env Variables ===
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
@@ -15,6 +16,19 @@ BINANCE = ccxt.binance({
     "options": {"defaultType": "future"}
 })
 
+# === Delete Message After Delay ===
+def delete_message(chat_id, message_id):
+    delete_url = f"https://api.telegram.org/bot{TOKEN}/deleteMessage"
+    try:
+        res = requests.post(delete_url, data={
+            "chat_id": chat_id,
+            "message_id": message_id
+        })
+        if not res.ok:
+            print(f"⚠️ Failed to delete message {message_id}: {res.text}")
+    except Exception as e:
+        print(f"❌ Delete error: {e}")
+
 # === Telegram Alert Function ===
 def send(msg: str):
     if not TOKEN or not CHATID:
@@ -22,7 +36,14 @@ def send(msg: str):
         return
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     try:
-        requests.post(url, data={"chat_id": CHATID, "text": msg})
+        res = requests.post(url, data={"chat_id": CHATID, "text": msg})
+        res.raise_for_status()
+        result = res.json()
+        
+        # Schedule deletion in 50 minutes
+        if result.get("ok"):
+            message_id = result["result"]["message_id"]
+            threading.Timer(3000, delete_message, args=(CHATID, message_id)).start()
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
