@@ -85,8 +85,8 @@ async def scan():
                 continue
 
             # Indicators
-            df1h["rsi"] = RSIIndicator(df1h["c"], window=9).rsi()
-            df1d["rsi"] = RSIIndicator(df1d["c"], window=9).rsi()
+            df1h["rsi"] = RSIIndicator(df1h["c"], window=14).rsi()
+            df1d["rsi"] = RSIIndicator(df1d["c"], window=14).rsi()
             df1h["atr"] = AverageTrueRange(high=df1h["h"], low=df1h["l"], close=df1h["c"], window=14).average_true_range()
             df1h["ema200"] = EMAIndicator(df1h["c"], window=200).ema_indicator()
 
