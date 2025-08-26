@@ -41,7 +41,7 @@ def send(msg: str):
         # Schedule deletion in 10 minutes
         if result.get("ok"):
             message_id = result["result"]["message_id"]
-            threading.Timer(600, delete_message, args=(CHATID, message_id)).start()
+            threading.Timer(6000, delete_message, args=(CHATID, message_id)).start()
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
