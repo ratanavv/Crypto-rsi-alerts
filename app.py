@@ -98,7 +98,7 @@ async def scan():
             df["dir"] = None
             df.loc[df["pl_flag"], "dir"] = 1
             df.loc[df["ph_flag"], "dir"] = -1
-            df["dir"].ffill(inplace=True)
+            df["dir"] = df["dir"].ffill()
 
             # Trend from direction
             df["trend"] = df["dir"].apply(lambda x: 1 if x == 1 else -1)
