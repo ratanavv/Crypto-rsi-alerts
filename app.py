@@ -112,10 +112,10 @@ async def scan():
             print(f"🔎 {sym} | prevTrend={prevTrend}, currTrend={currTrend}, price={price}")
 
             if prevTrend == -1 and currTrend == 1:
-                send(f"📈🟢 LONG SIGNAL (Trend Switch)\n{sym}\nPrice: ${price:.6f}")
+                send(f"📉🔴 SHORT SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
 
             elif prevTrend == 1 and currTrend == -1:
-                send(f"📉🔴 SHORT SIGNAL (Trend Switch)\n{sym}\nPrice: ${price:.6f}")
+                send(f"📈🟢 LONG SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
 
         except Exception as e:
             print(f"❌ Error processing {sym}: {e}")
