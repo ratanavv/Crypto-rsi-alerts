@@ -73,10 +73,8 @@ def rsi(series: pd.Series, length=2):
     delta = series.diff()
     gain = delta.where(delta > 0, 0.0)
     loss = -delta.where(delta < 0, 0.0)
-
-    avg_gain = gain.rolling(length).mean()
-    avg_loss = loss.rolling(length).mean()
-    
+    avg_gain = gain.ewm(alpha=1/length, min_periods=length).mean()
+    avg_loss = loss.ewm(alpha=1/length, min_periods=length).mean()
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
