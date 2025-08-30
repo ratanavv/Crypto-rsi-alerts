@@ -38,10 +38,10 @@ def send(msg: str):
         res.raise_for_status()
         result = res.json()
 
-        # Schedule deletion in 10 minutes
+        # Schedule deletion in 60 minutes
         if result.get("ok"):
             message_id = result["result"]["message_id"]
-            threading.Timer(6000, delete_message, args=(CHATID, message_id)).start()
+            threading.Timer(3600, delete_message, args=(CHATID, message_id)).start()
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
@@ -66,6 +66,24 @@ def get_top_futures_symbols(limit=30):
     except Exception as e:
         print(f"❌ Error getting futures list: {e}")
         return []
+
+
+# === RSI(2) Function ===
+def rsi(series: pd.Series, length=2):
+    delta = series.diff()
+    gain = delta.where(delta > 0, 0.0)
+    loss = -delta.where(delta < 0, 0.0)
+
+    avg_gain = gain.rolling(length).mean()
+    avg_loss = loss.rolling(length).mean()
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+# === Global state: track RSI confirmation eligibility per symbol ===
+# allow_rsi[sym] = {"enabled": bool, "type": "long"|"short"}
+allow_rsi = {}
 
 # === Strategy Logic: Trend Switch Detection (Simplified Pine Port) ===
 async def scan():
@@ -104,18 +122,45 @@ async def scan():
             df["trend"] = df["dir"].apply(lambda x: 1 if x == 1 else -1)
             df["prevTrend"] = df["trend"].shift(1)
 
+            # === RSI(2) ===
+            df["rsi2"] = rsi(df["c"], 2)
+
             # === Latest Signal ===
             prevTrend = df["prevTrend"].iloc[-1]
             currTrend = df["trend"].iloc[-1]
             price = df["c"].iloc[-1]
 
-            print(f"🔎 {sym} | prevTrend={prevTrend}, currTrend={currTrend}, price={price}")
+            rsi_val = df["rsi2"].iloc[-1]
+            rsi_prev = df["rsi2"].iloc[-2]
 
+            print(f"🔎 {sym} | prevTrend={prevTrend}, currTrend={currTrend}, price={price:.4f}, rsi2={rsi_val:.2f}")
+
+            # Initialize allow_rsi for new symbols
+            if sym not in allow_rsi:
+                allow_rsi[sym] = {"enabled": False, "type": None}
+                
+            # --- Trend switch signals ---
             if prevTrend == -1 and currTrend == 1:
                 send(f"📉🔴 SHORT SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
-
+                allow_rsi[sym] = {"enabled": True, "type": "short"}  # wait only for RSI SELL
+                
             elif prevTrend == 1 and currTrend == -1:
                 send(f"📈🟢 LONG SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
+                allow_rsi[sym] = {"enabled": True, "type": "long"}  # wait only for RSI BUY
+
+            # --- RSI Confirmation (only once, and matching type) ---
+            if allow_rsi[sym]["enabled"]:
+                if allow_rsi[sym]["type"] == "long":
+                    # Only look for RSI cross below 20
+                    if rsi_prev > 20 and rsi_val < 20:
+                        send(f"🔵 RSI(2) BUY Confirm\n{sym}\nRSI: {rsi_val:.2f}")
+                        allow_rsi[sym]["enabled"] = False
+
+                elif allow_rsi[sym]["type"] == "short":
+                    # Only look for RSI cross above 80
+                    if rsi_prev < 80 and rsi_val > 80:
+                        send(f"🟠 RSI(2) SELL Confirm\n{sym}\nRSI: {rsi_val:.2f}")
+                        allow_rsi[sym]["enabled"] = False
 
         except Exception as e:
             print(f"❌ Error processing {sym}: {e}")
