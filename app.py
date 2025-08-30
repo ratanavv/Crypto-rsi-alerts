@@ -153,13 +153,13 @@ async def scan():
                 if allow_rsi[sym]["type"] == "long":
                     # Only look for RSI cross below 20
                     if rsi_prev > 20 and rsi_val < 20:
-                        send(f"🔵 RSI(2) BUY Confirm\n{sym}\nRSI: {rsi_val:.2f}")
+                        send(f"🔵 RSI(2) BUY (30) Confirm\n{sym}\nRSI: {rsi_val:.2f}")
                         allow_rsi[sym]["enabled"] = False
 
                 elif allow_rsi[sym]["type"] == "short":
                     # Only look for RSI cross above 80
                     if rsi_prev < 80 and rsi_val > 80:
-                        send(f"🟠 RSI(2) SELL Confirm\n{sym}\nRSI: {rsi_val:.2f}")
+                        send(f"🟠 RSI(2) SELL (30) Confirm\n{sym}\nRSI: {rsi_val:.2f}")
                         allow_rsi[sym]["enabled"] = False
 
         except Exception as e:
