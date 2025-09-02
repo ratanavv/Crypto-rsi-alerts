@@ -38,10 +38,10 @@ def send(msg: str):
         res.raise_for_status()
         result = res.json()
 
-        # Schedule deletion in 60 minutes
+        # Schedule deletion in 30 minutes
         if result.get("ok"):
             message_id = result["result"]["message_id"]
-            threading.Timer(3600, delete_message, args=(CHATID, message_id)).start()
+            threading.Timer(1800, delete_message, args=(CHATID, message_id)).start()
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
