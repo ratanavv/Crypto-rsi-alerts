@@ -38,10 +38,10 @@ def send(msg: str):
         res.raise_for_status()
         result = res.json()
 
-        # Schedule deletion in 10 minutes
+        # Schedule deletion in 15 minutes
         if result.get("ok"):
             message_id = result["result"]["message_id"]
-            threading.Timer(600, delete_message, args=(CHATID, message_id)).start()
+            threading.Timer(900, delete_message, args=(CHATID, message_id)).start()
     except Exception as e:
         print(f"❌ Telegram error: {e}")
 
@@ -151,13 +151,13 @@ async def scan():
                 if allow_rsi[sym]["type"] == "long":
                     # Only look for RSI cross below 20
                     if rsi_prev > 20 and rsi_val < 20:
-                        send(f"🔵 RSI(2) BUY Confirm (30)\n{sym}\nRSI: {rsi_val:.2f}")
+                        send(f"🔵 RSI(2) BUY Confirm (30)\n{sym}\nPrice: ${price:.6f}")
                         allow_rsi[sym]["enabled"] = False
 
                 elif allow_rsi[sym]["type"] == "short":
                     # Only look for RSI cross above 80
                     if rsi_prev < 80 and rsi_val > 80:
-                        send(f"🟠 RSI(2) SELL Confirm (30)\n{sym}\nRSI: {rsi_val:.2f}")
+                        send(f"🟠 RSI(2) SELL Confirm (30)\n{sym}\nPrice: ${price:.6f}")
                         allow_rsi[sym]["enabled"] = False
 
         except Exception as e:
