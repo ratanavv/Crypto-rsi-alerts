@@ -2,6 +2,9 @@ import os, time, requests, ccxt, pandas as pd
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import threading
+from datetime import datetime
+
+last_daily_sent = None   # track last date when daily list was sent
 
 # === Load Env Variables ===
 TOKEN  = os.getenv("TELEGRAM_TOKEN")
@@ -85,12 +88,28 @@ allow_rsi = {}
 
 # === Strategy Logic: Trend Switch Detection (Simplified Pine Port) ===
 async def scan():
+    global last_daily_sent
+    
     print("🔍 Scanning Anchored VWAP Swing trend switches...")
-    symbols = get_top_futures_symbols(limit=30)
+    symbols = get_top_futures_symbols(limit=25)
     if not symbols:
         print("⚠️ No symbols found.")
         return
 
+    # === Check if daily list needs to be sent ===
+    today = datetime.utcnow().date()
+    if last_daily_sent != today:
+        # Send once per day, no auto-delete
+        msg = "📊 Daily Top Futures Pairs\n\n" + "\n".join(symbols)
+        try:
+            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+            requests.post(url, data={"chat_id": CHATID, "text": msg})
+            last_daily_sent = today
+            print("✅ Daily top pairs list sent.")
+        except Exception as e:
+            print(f"❌ Failed to send daily list: {e}")
+
+    # === Normal per-symbol scanning continues ===
     for sym in symbols:
         try:
             ohlcv = fetch_ohlcv_safe(sym, "5m", 500)
