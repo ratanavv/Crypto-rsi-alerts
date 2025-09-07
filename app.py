@@ -55,7 +55,7 @@ def fetch_ohlcv_safe(symbol, timeframe="5m", limit=500):
         return []
 
 # === Get Top Futures Pairs by Volume ===
-def get_top_futures_symbols(limit=30):
+def get_top_futures_symbols(limit=25):
     try:
         res = requests.get("https://fapi.binance.com/fapi/v1/ticker/24hr")
         res.raise_for_status()
@@ -139,11 +139,11 @@ async def scan():
                 
             # --- Trend switch signals ---
             if prevTrend == -1 and currTrend == 1:
-                send(f"📉🔴 SHORT SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
+                #send(f"📉🔴 SHORT SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "short"}  # wait only for RSI SELL
                 
             elif prevTrend == 1 and currTrend == -1:
-                send(f"📈🟢 LONG SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
+                #send(f"📈🟢 LONG SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "long"}  # wait only for RSI BUY
 
             # --- RSI Confirmation (only once, and matching type) ---
