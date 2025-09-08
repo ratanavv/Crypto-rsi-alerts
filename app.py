@@ -58,7 +58,7 @@ def fetch_ohlcv_safe(symbol, timeframe="5m", limit=500):
         return []
 
 # === Get Top Futures Pairs by Volume ===
-def get_top_futures_symbols(limit=25):
+def get_top_futures_symbols(limit=30):
     try:
         res = requests.get("https://fapi.binance.com/fapi/v1/ticker/24hr")
         res.raise_for_status()
@@ -91,7 +91,7 @@ async def scan():
     global last_daily_sent
     
     print("🔍 Scanning Anchored VWAP Swing trend switches...")
-    symbols = get_top_futures_symbols(limit=25)
+    symbols = get_top_futures_symbols(limit=30)
     if not symbols:
         print("⚠️ No symbols found.")
         return
