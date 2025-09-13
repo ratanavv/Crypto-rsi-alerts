@@ -121,7 +121,7 @@ async def scan():
             df.set_index("ts", inplace=True)
 
             # === Swing High/Low Logic (very simplified) ===
-            prd = 30  # swing period
+            prd = 50  # swing period
             df["ph"] = df["h"].rolling(prd).max()
             df["pl"] = df["l"].rolling(prd).min()
 
@@ -158,11 +158,11 @@ async def scan():
                 
             # --- Trend switch signals ---
             if prevTrend == -1 and currTrend == 1:
-                #send(f"📉🔴 SHORT SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
+                send(f"📉🔴 SHORT SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "short"}  # wait only for RSI SELL
                 
             elif prevTrend == 1 and currTrend == -1:
-                #send(f"📈🟢 LONG SIGNAL (30)\n{sym}\nPrice: ${price:.6f}")
+                send(f"📈🟢 LONG SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "long"}  # wait only for RSI BUY
 
             # --- RSI Confirmation (only once, and matching type) ---
@@ -170,13 +170,13 @@ async def scan():
                 if allow_rsi[sym]["type"] == "long":
                     # Only look for RSI cross below 20
                     if rsi_prev > 20 and rsi_val < 20:
-                        send(f"🔵 RSI(2) BUY Confirm (30)\n{sym}\nPrice: ${price:.6f}")
+                        send(f"🔵 RSI(2) BUY Confirm (50)\n{sym}\nPrice: ${price:.6f}")
                         allow_rsi[sym]["enabled"] = False
 
                 elif allow_rsi[sym]["type"] == "short":
                     # Only look for RSI cross above 80
                     if rsi_prev < 80 and rsi_val > 80:
-                        send(f"🟠 RSI(2) SELL Confirm (30)\n{sym}\nPrice: ${price:.6f}")
+                        send(f"🟠 RSI(2) SELL Confirm (50)\n{sym}\nPrice: ${price:.6f}")
                         allow_rsi[sym]["enabled"] = False
 
         except Exception as e:
