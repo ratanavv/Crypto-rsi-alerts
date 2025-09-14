@@ -158,11 +158,11 @@ async def scan():
                 
             # --- Trend switch signals ---
             if prevTrend == -1 and currTrend == 1:
-                send(f"📉🔴 SHORT SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
+                #send(f"📉🔴 SHORT SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "short"}  # wait only for RSI SELL
                 
             elif prevTrend == 1 and currTrend == -1:
-                send(f"📈🟢 LONG SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
+                #send(f"📈🟢 LONG SIGNAL (50)\n{sym}\nPrice: ${price:.6f}")
                 allow_rsi[sym] = {"enabled": True, "type": "long"}  # wait only for RSI BUY
 
             # --- RSI Confirmation (only once, and matching type) ---
